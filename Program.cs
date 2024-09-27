@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 
 // Tipos de token disponibles
@@ -147,20 +146,20 @@ class Programa
 {
     static void Main(string[] args)
     {
-        string rutaArchivo = "programa1.txt"; // Ruta del archivo de código fuente
+        Console.WriteLine("Introduce el código fuente:");
+        string codigoFuente = Console.ReadLine(); // Leer el código desde la consola
 
-        if (!File.Exists(rutaArchivo))
-        {
-            Console.WriteLine("Archivo no encontrado.");
-            return;
-        }
-
-        string codigoFuente = File.ReadAllText(rutaArchivo);
         List<Token> tokens = AnalizadorLexico.Analizar(codigoFuente);
 
-        foreach (Token token in tokens)
+        // Encabezado de la tabla
+        Console.WriteLine("\nTabla de Tokens:");
+        Console.WriteLine("{0,-10} | {1,-15} | {2,-15}", "Índice", "Tipo de Token", "Valor");
+        Console.WriteLine(new string('-', 45));
+
+        // Imprimir los tokens
+        for (int i = 0; i < tokens.Count; i++)
         {
-            Console.WriteLine(token);
+            Console.WriteLine("{0,-10} | {1,-15} | {2,-15}", i, tokens[i].Tipo, tokens[i].Valor);
         }
     }
 }
