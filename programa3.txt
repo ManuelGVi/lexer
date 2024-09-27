@@ -1,0 +1,4 @@
+x = 3.14;
+y = 2.71;
+retorno x * y;
+// Fin del programa

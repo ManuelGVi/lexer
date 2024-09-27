@@ -1,0 +1,14 @@
+C:\Users\neoge\Desktop\LA\lexer\bin\Debug\net8.0\lexer.exe
+C:\Users\neoge\Desktop\LA\lexer\bin\Debug\net8.0\lexer.deps.json
+C:\Users\neoge\Desktop\LA\lexer\bin\Debug\net8.0\lexer.runtimeconfig.json
+C:\Users\neoge\Desktop\LA\lexer\bin\Debug\net8.0\lexer.dll
+C:\Users\neoge\Desktop\LA\lexer\bin\Debug\net8.0\lexer.pdb
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\lexer.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\lexer.AssemblyInfoInputs.cache
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\lexer.AssemblyInfo.cs
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\lexer.csproj.CoreCompileInputs.cache
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\lexer.dll
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\refint\lexer.dll
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\lexer.pdb
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\lexer.genruntimeconfig.cache
+C:\Users\neoge\Desktop\LA\lexer\obj\Debug\net8.0\ref\lexer.dll

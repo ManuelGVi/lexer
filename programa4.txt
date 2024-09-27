@@ -1,0 +1,4 @@
+z = @valor;
+si (a = 20) {
+    retorno;
+}
