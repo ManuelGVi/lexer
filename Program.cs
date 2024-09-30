@@ -27,17 +27,26 @@ class Program
         }
         Console.WriteLine("Código fuente recibido: ");
         Console.WriteLine(codigo);
-        List<Token> tokens = AnalizadorLexico.Analizar(codigo);
+       List<Token> tokens = AnalizadorLexico.Analizar(codigo);
 
-        // Encabezado de la tabla
-        Console.WriteLine("\nTabla de Tokens:");
-        Console.WriteLine("{0,-10} | {1,-15} | {2,-15}", "Índice", "Tipo de Token", "Valor");
-        Console.WriteLine(new string('-', 45));
+// Imprimir la tabla de tokens
+Console.WriteLine("\nTabla de Tokens:");
+Console.WriteLine("{0,-10} | {1,-15} | {2,-15}", "Índice", "Tipo de Token", "Valor");
+Console.WriteLine(new string('-', 45));
 
-        // Imprimir los tokens
-        for (int i = 0; i < tokens.Count; i++)
-        {
-            Console.WriteLine("{0,-10} | {1,-15} | {2,-15}", i, tokens[i].Tipo, tokens[i].Valor);
-        }
+// Imprimir los tokens
+for (int i = 0; i < tokens.Count; i++)
+{
+    Console.WriteLine("{0,-10} | {1,-15} | {2,-15}", i, tokens[i].Tipo, tokens[i].Valor);
+}
+
+// Análisis sintáctico y generación del árbol sintáctico
+AnalizadorSintactico analizador = new AnalizadorSintactico(tokens);
+Nodo arbolSintactico = analizador.Analizar();
+
+// Imprimir el árbol sintáctico
+Console.WriteLine("\nÁrbol Sintáctico:");
+arbolSintactico.Imprimir();
     }
+    
 }
