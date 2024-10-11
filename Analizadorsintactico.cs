@@ -1,178 +1,267 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.Generic;
-
-public class Nodo
-{
-    public string Valor { get; set; }          // Valor del nodo
-    public List<Nodo> Hijos { get; set; }      // Lista de nodos hijos
-
-    public Nodo(string valor)
-    {
-        Valor = valor;                         // Inicializa el valor del nodo
-        Hijos = new List<Nodo>();              // Inicializa la lista de hijos
-    }
-
-    public void AgregarHijo(Nodo hijo)
-    {
-        Hijos.Add(hijo);                       // Agrega un hijo a la lista
-    }
-
-    public void Imprimir(string prefijo = "", bool esUltimo = true) // Método para imprimir el árbol
-    {
-        Console.WriteLine(prefijo + (esUltimo ? "└── " : "├── ") + Valor); // Imprime el valor con prefijo
-
-        prefijo += esUltimo ? "    " : "│   "; // Ajusta el prefijo para los hijos
-
-        for (int i = 0; i < Hijos.Count; i++)
-        {
-            Hijos[i].Imprimir(prefijo, i == Hijos.Count - 1); // Llama recursivamente a imprimir los hijos
-        }
-    }
-}
-
-
 public class AnalizadorSintactico
 {
-    private List<Token> tokens;  // Lista de tokens a analizar
-    private int posicion;         // Posición actual en la lista de tokens
+    private List<Token> tokens;
+    private int posicion;
 
     public AnalizadorSintactico(List<Token> tokens)
     {
-        this.tokens = tokens;    // Inicializa la lista de tokens
-        this.posicion = 0;       // Comienza en la posición 0
+        this.tokens = tokens;
+        this.posicion = 0;
     }
 
-    public Nodo Analizar() // Método para iniciar el análisis
+    // Método principal que inicia el análisis sintáctico
+    public Nodo Analizar()
     {
-        Nodo raiz = new Nodo("Programa"); // Crea el nodo raíz
+        Nodo raiz = new Nodo("Programa");
 
-        while (posicion < tokens.Count) // Mientras queden tokens
+        while (posicion < tokens.Count)
         {
-            raiz.AgregarHijo(Sentencia()); // Agrega sentencias al árbol
+            Nodo sentencia = AnalizarSentencia();
+            if (sentencia != null)
+            {
+                raiz.AgregarHijo(sentencia);
+            }
         }
-        return raiz; // Devuelve el árbol sintáctico
+
+        return raiz;
     }
 
-    private Nodo Sentencia() // Método para analizar una sentencia
+    // Método para analizar sentencias (if, while, return, declaración)
+    private Nodo AnalizarSentencia()
     {
-        if (tokens[posicion].Tipo == TipoToken.PalabraClave && tokens[posicion].Valor == "si")
+        Token tokenActual = ObtenerTokenActual();
+
+        if (tokenActual.Tipo == TipoToken.PalabraClave)
         {
-            return AnalizarSentenciaIf();
+            switch (tokenActual.Valor)
+            {
+                case "si":
+                    return AnalizarIf();
+                case "mientras":
+                    return AnalizarWhile();
+                case "retorno":
+                    return AnalizarReturn();
+                default:
+                    throw new Exception($"Palabra clave no reconocida: {tokenActual.Valor}");
+            }
         }
-        else if (tokens[posicion].Tipo == TipoToken.PalabraClave && tokens[posicion].Valor == "retorno")
+        else if (tokenActual.Tipo == TipoToken.Identificador)
         {
-            return AnalizarSentenciaReturn();
+            return AnalizarDeclaracion();
         }
-        else
-        {
-            throw new Exception("Sentencia no válida");
-        }
+
+        throw new Exception($"Sentencia no válida: {tokenActual.Valor}");
     }
 
-    private Nodo AnalizarSentenciaIf() // Método para analizar la sentencia if
+    // Análisis de sentencias "if"
+// Análisis de sentencias "if" con "else" opcional
+private Nodo AnalizarIf()
+{
+    Nodo nodoIf = new Nodo("Sentencia If");
+
+    // Se espera "si"
+    AvanzarToken(); // Saltar "si"
+
+    // Se espera "("
+    VerificarToken(TipoToken.Delimitador, "(");
+    AvanzarToken(); // Saltar "("
+
+    // Analizar condición
+    Nodo condicion = AnalizarExpresion();
+    nodoIf.AgregarHijo(condicion);
+
+    // Se espera ")"
+    VerificarToken(TipoToken.Delimitador, ")");
+    AvanzarToken(); // Saltar ")"
+
+    // Se espera "{"
+    VerificarToken(TipoToken.Delimitador, "{");
+    AvanzarToken(); // Saltar "{"
+
+    // Analizar sentencias dentro del bloque if
+    Nodo bloqueIf = AnalizarBloque();
+    nodoIf.AgregarHijo(new Nodo("Bloque If"));
+    nodoIf.AgregarHijo(bloqueIf);
+
+    if (posicion < tokens.Count && ObtenerTokenActual().Valor == "sino")
     {
-        Nodo nodoIf = new Nodo("Sentencia If");
-        posicion++; // Consumir "si"
-        nodoIf.AgregarHijo(AceptarDelimitador("("));
-        nodoIf.AgregarHijo(Expresion()); // Agregar expresión
-        nodoIf.AgregarHijo(AceptarDelimitador(")"));
-        nodoIf.AgregarHijo(AceptarDelimitador("{"));
-        while (posicion < tokens.Count && tokens[posicion].Valor != "}")
-        {
-            nodoIf.AgregarHijo(Sentencia()); // Agrega sentencias dentro del bloque
-        }
-        nodoIf.AgregarHijo(AceptarDelimitador("}"));
-        return nodoIf; // Devuelve el nodo "Sentencia If"
+        AvanzarToken(); 
+
+        VerificarToken(TipoToken.Delimitador, "{");
+        AvanzarToken(); 
+
+        Nodo bloqueElse = AnalizarBloque();
+        nodoIf.AgregarHijo(new Nodo("Bloque Else"));
+        nodoIf.AgregarHijo(bloqueElse);
     }
 
-    private Nodo AnalizarSentenciaReturn() // Método para analizar la sentencia return
+    return nodoIf;
+}
+
+
+    // Análisis de ciclos "while"
+    private Nodo AnalizarWhile()
+    {
+        Nodo nodoWhile = new Nodo("Sentencia While");
+
+        // Se espera "mientras"
+        AvanzarToken(); // Saltar "mientras"
+
+        // Se espera "("
+        VerificarToken(TipoToken.Delimitador, "(");
+        AvanzarToken(); // Saltar "("
+
+        // Analizar condición
+        Nodo condicion = AnalizarExpresion();
+        nodoWhile.AgregarHijo(condicion);
+
+        // Se espera ")"
+        VerificarToken(TipoToken.Delimitador, ")");
+        AvanzarToken(); // Saltar ")"
+
+        // Se espera "{"
+        VerificarToken(TipoToken.Delimitador, "{");
+        AvanzarToken(); // Saltar "{"
+
+        // Analizar sentencias dentro del bloque
+        Nodo bloque = AnalizarBloque();
+        nodoWhile.AgregarHijo(bloque);
+
+        return nodoWhile;
+    }
+
+    // Análisis de sentencias "return"
+    private Nodo AnalizarReturn()
     {
         Nodo nodoReturn = new Nodo("Sentencia Return");
-        posicion++; // Consumir "retorno"
-        nodoReturn.AgregarHijo(AceptarIdentificador()); // Agregar identificador
-        nodoReturn.AgregarHijo(AceptarOperadorM()); // Agregar operador
-        nodoReturn.AgregarHijo(AceptarNumero()); // Agregar número
-        AceptarDelimitador(";"); // Consumir el punto y coma
-        return nodoReturn; // Devuelve el nodo "Sentencia Return"
+
+        // Se espera "retorno"
+        AvanzarToken(); // Saltar "retorno"
+
+        // Analizar expresión de retorno
+        Nodo expresion = AnalizarExpresion();
+        nodoReturn.AgregarHijo(expresion);
+
+        // Se espera ";"
+        VerificarToken(TipoToken.Delimitador, ";");
+        AvanzarToken(); // Saltar ";"
+
+        return nodoReturn;
     }
 
-    private Nodo Expresion() // Método para analizar expresiones
+    // Análisis de declaraciones (identificador = expresión;)
+    private Nodo AnalizarDeclaracion()
     {
-        Nodo nodoExp = new Nodo("Expresión");
-        nodoExp.AgregarHijo(AceptarIdentificador()); // Agrega identificador
-        nodoExp.AgregarHijo(AceptarOperadorL()); // Agrega operador lógico
-        nodoExp.AgregarHijo(AceptarNumero()); // Agrega número
-        return nodoExp; // Devuelve el nodo de la expresión
+        Nodo nodoDeclaracion = new Nodo("Declaración");
+
+        // Se espera un identificador
+        Token tokenIdentificador = ObtenerTokenActual();
+        VerificarToken(TipoToken.Identificador);
+        nodoDeclaracion.AgregarHijo(new Nodo($"Identificador: {tokenIdentificador.Valor}"));
+        AvanzarToken(); // Saltar el identificador
+
+        // Se espera "="
+        VerificarToken(TipoToken.OperadorM, "=");
+        AvanzarToken(); // Saltar "="
+
+        // Analizar expresión
+        Nodo expresion = AnalizarExpresion();
+        nodoDeclaracion.AgregarHijo(expresion);
+
+        // Se espera ";"
+        VerificarToken(TipoToken.Delimitador, ";");
+        AvanzarToken(); // Saltar ";"
+
+        return nodoDeclaracion;
     }
 
-    private Nodo AceptarDelimitador(string delimitador)
+    // Método para analizar expresiones (ej. x + 1)
+    private Nodo AnalizarExpresion()
     {
-        if (posicion < tokens.Count && tokens[posicion].Tipo == TipoToken.Delimitador && tokens[posicion].Valor == delimitador)
+        Nodo nodoExpresion = new Nodo("Expresión");
+
+        // Primer operando
+        Token operando = ObtenerTokenActual();
+        if (operando.Tipo == TipoToken.Identificador || operando.Tipo == TipoToken.Numero)
         {
-            Nodo nodoDelimitador = new Nodo(delimitador);
-            posicion++;
-            return nodoDelimitador;
+            nodoExpresion.AgregarHijo(new Nodo($"Operando: {operando.Valor}"));
+            AvanzarToken();
         }
         else
         {
-            throw new Exception($"Se esperaba '{delimitador}'");
+            throw new Exception("Se esperaba un operando");
+        }
+
+        // Operador
+        if (EsOperador(ObtenerTokenActual()))
+        {
+            Token operador = ObtenerTokenActual();
+            nodoExpresion.AgregarHijo(new Nodo($"Operador: {operador.Valor}"));
+            AvanzarToken(); // Saltar el operador
+
+            // Segundo operando
+            operando = ObtenerTokenActual();
+            if (operando.Tipo == TipoToken.Identificador || operando.Tipo == TipoToken.Numero)
+            {
+                nodoExpresion.AgregarHijo(new Nodo($"Operando: {operando.Valor}"));
+                AvanzarToken();
+            }
+            else
+            {
+                throw new Exception("Se esperaba un segundo operando");
+            }
+        }
+
+        return nodoExpresion;
+    }
+
+    // Análisis de bloques de sentencias "{ ... }"
+    private Nodo AnalizarBloque()
+    {
+        Nodo nodoBloque = new Nodo("Bloque");
+
+        while (ObtenerTokenActual().Valor != "}")
+        {
+            Nodo sentencia = AnalizarSentencia();
+            if (sentencia != null)
+            {
+                nodoBloque.AgregarHijo(sentencia);
+            }
+        }
+
+        // Se espera "}"
+        VerificarToken(TipoToken.Delimitador, "}");
+        AvanzarToken(); // Saltar "}"
+
+        return nodoBloque;
+    }
+
+    // Método para verificar que el token actual sea del tipo esperado
+    private void VerificarToken(TipoToken tipoEsperado, string valorEsperado = null)
+    {
+        Token tokenActual = ObtenerTokenActual();
+        if (tokenActual.Tipo != tipoEsperado || (valorEsperado != null && tokenActual.Valor != valorEsperado))
+        {
+            throw new Exception($"Error de análisis sintáctico: Se esperaba {tipoEsperado} '{valorEsperado}' y se encontró '{tokenActual.Valor}'");
         }
     }
 
-    private Nodo AceptarIdentificador()
+    // Método para avanzar al siguiente token
+    private void AvanzarToken()
     {
-        if (posicion < tokens.Count && tokens[posicion].Tipo == TipoToken.Identificador)
-        {
-            Nodo nodoIdentificador = new Nodo(tokens[posicion].Valor);
-            posicion++;
-            return nodoIdentificador;
-        }
-        else
-        {
-            throw new Exception("Se esperaba un identificador");
-        }
+        posicion++;
     }
 
-    private Nodo AceptarOperadorM()
+    // Obtener el token actual
+    private Token ObtenerTokenActual()
     {
-        if (posicion < tokens.Count && tokens[posicion].Tipo == TipoToken.OperadorM)
-        {
-            Nodo nodoOperador = new Nodo(tokens[posicion].Valor);
-            posicion++;
-            return nodoOperador;
-        }
-        else
-        {
-            throw new Exception("Se esperaba un operador matemático");
-        }
+        if (posicion >= tokens.Count) throw new Exception("No hay más tokens disponibles");
+        return tokens[posicion];
     }
 
-    private Nodo AceptarOperadorL()
+    // Verificar si el token actual es un operador matemático o lógico
+    private bool EsOperador(Token token)
     {
-        if (posicion < tokens.Count && tokens[posicion].Tipo == TipoToken.OperadorL)
-        {
-            Nodo nodoOperador = new Nodo(tokens[posicion].Valor);
-            posicion++;
-            return nodoOperador;
-        }
-        else
-        {
-            throw new Exception("Se esperaba un operador lógico");
-        }
-    }
-
-    private Nodo AceptarNumero()
-    {
-        if (posicion < tokens.Count && tokens[posicion].Tipo == TipoToken.Numero)
-        {
-            Nodo nodoNumero = new Nodo(tokens[posicion].Valor);
-            posicion++;
-            return nodoNumero;
-        }
-        else
-        {
-            throw new Exception("Se esperaba un número");
-        }
+        return token.Tipo == TipoToken.OperadorM || token.Tipo == TipoToken.OperadorL;
     }
 }
