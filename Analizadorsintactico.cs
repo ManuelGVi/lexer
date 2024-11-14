@@ -53,51 +53,52 @@ public class AnalizadorSintactico
         throw new Exception($"Sentencia no válida: {tokenActual.Valor}");
     }
 
-    // Análisis de sentencias "if"
-// Análisis de sentencias "if" con "else" opcional
-private Nodo AnalizarIf()
-{
-    Nodo nodoIf = new Nodo("Sentencia If");
-
-    // Se espera "si"
-    AvanzarToken(); // Saltar "si"
-
-    // Se espera "("
-    VerificarToken(TipoToken.Delimitador, "(");
-    AvanzarToken(); // Saltar "("
-
-    // Analizar condición
-    Nodo condicion = AnalizarExpresion();
-    nodoIf.AgregarHijo(condicion);
-
-    // Se espera ")"
-    VerificarToken(TipoToken.Delimitador, ")");
-    AvanzarToken(); // Saltar ")"
-
-    // Se espera "{"
-    VerificarToken(TipoToken.Delimitador, "{");
-    AvanzarToken(); // Saltar "{"
-
-    // Analizar sentencias dentro del bloque if
-    Nodo bloqueIf = AnalizarBloque();
-    nodoIf.AgregarHijo(new Nodo("Bloque If"));
-    nodoIf.AgregarHijo(bloqueIf);
-
-    if (posicion < tokens.Count && ObtenerTokenActual().Valor == "sino")
+    // Análisis de sentencias "if" con "else" opcional
+    private Nodo AnalizarIf()
     {
-        AvanzarToken(); 
+        Nodo nodoIf = new Nodo("Sentencia If");
 
+        // Se espera "si"
+        AvanzarToken(); // Saltar "si"
+
+        // Se espera "("
+        VerificarToken(TipoToken.Delimitador, "(");
+        AvanzarToken(); // Saltar "("
+
+        // Analizar condición
+        Nodo condicion = AnalizarExpresion();
+        nodoIf.AgregarHijo(condicion);
+
+        // Se espera ")"
+        VerificarToken(TipoToken.Delimitador, ")");
+        AvanzarToken(); // Saltar ")"
+
+        // Se espera "{"
         VerificarToken(TipoToken.Delimitador, "{");
-        AvanzarToken(); 
+        AvanzarToken(); // Saltar "{"
 
-        Nodo bloqueElse = AnalizarBloque();
-        nodoIf.AgregarHijo(new Nodo("Bloque Else"));
-        nodoIf.AgregarHijo(bloqueElse);
+        // Analizar sentencias dentro del bloque if
+        Nodo bloqueIf = AnalizarBloque();
+
+        if (posicion < tokens.Count && ObtenerTokenActual().Valor == "sino")
+        {
+            Nodo nodoElse = new Nodo ("Sentencia else");
+            nodoElse.AgregarHijo(bloqueIf);
+            AvanzarToken(); 
+
+            VerificarToken(TipoToken.Delimitador, "{");
+            AvanzarToken(); 
+
+            Nodo bloqueElse = AnalizarBloque();
+            nodoElse.AgregarHijo(bloqueElse);
+            nodoIf.AgregarHijo(nodoElse);
+        }
+        else{
+            nodoIf.AgregarHijo(bloqueIf);
+        }
+
+        return nodoIf;
     }
-
-    return nodoIf;
-}
-
 
     // Análisis de ciclos "while"
     private Nodo AnalizarWhile()
@@ -178,12 +179,14 @@ private Nodo AnalizarIf()
     // Método para analizar expresiones (ej. x + 1)
     private Nodo AnalizarExpresion()
     {
-        Nodo nodoExpresion = new Nodo("Expresión");
+        // Crear el nodo para la expresión
+        Nodo nodoExpresion = null;
 
         // Primer operando
         Token operando = ObtenerTokenActual();
         if (operando.Tipo == TipoToken.Identificador || operando.Tipo == TipoToken.Numero)
         {
+            nodoExpresion = new Nodo("Operador: (temp)"); // Nodo temporal para el operador
             nodoExpresion.AgregarHijo(new Nodo($"Operando: {operando.Valor}"));
             AvanzarToken();
         }
@@ -196,7 +199,7 @@ private Nodo AnalizarIf()
         if (EsOperador(ObtenerTokenActual()))
         {
             Token operador = ObtenerTokenActual();
-            nodoExpresion.AgregarHijo(new Nodo($"Operador: {operador.Valor}"));
+            nodoExpresion.Valor = $"Operador: {operador.Valor}"; // Cambia el valor del nodo temporal
             AvanzarToken(); // Saltar el operador
 
             // Segundo operando
