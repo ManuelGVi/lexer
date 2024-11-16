@@ -63,7 +63,7 @@ public class AnalizadorSintactico
 
         // Se espera "("
         VerificarToken(TipoToken.Delimitador, "(");
-        AvanzarToken(); // Saltar "("
+        AvanzarToken(); // Saltar "("s
 
         // Analizar condición
         Nodo condicion = AnalizarExpresion();
@@ -153,7 +153,7 @@ public class AnalizadorSintactico
     // Análisis de declaraciones (identificador = expresión;)
     private Nodo AnalizarDeclaracion()
     {
-        Nodo nodoDeclaracion = new Nodo("Declaración");
+        Nodo nodoDeclaracion = new Nodo("Operador: =");
 
         // Se espera un identificador
         Token tokenIdentificador = ObtenerTokenActual();

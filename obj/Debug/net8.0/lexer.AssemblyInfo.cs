@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("lexer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+feb313fa75c320904f32466d9a8b263bd67d3e3c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e9cc32b74cb177cc5a8535c89c29e2bc090126f4")]
 [assembly: System.Reflection.AssemblyProductAttribute("lexer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("lexer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

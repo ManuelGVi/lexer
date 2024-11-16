@@ -47,6 +47,15 @@ Nodo arbolSintactico = analizador.Analizar();
 // Imprimir el árbol sintáctico
 Console.WriteLine("\nÁrbol Sintáctico:");
 arbolSintactico.Imprimir();
+ // Generar la tabla de cuádruplos
+         GeneradorCodigoIntermedio generador = new GeneradorCodigoIntermedio();
+    List<Cuadruplo> cuadruplos = generador.GenerarCodigoIntermedio(arbolSintactico);
+
+    // Imprimir los cuádruplos
+    Console.WriteLine("\nCuádruplos:");
+    foreach (var cuadruplo in cuadruplos)
+    {
+        Console.WriteLine(cuadruplo);
     }
-    
+}    
 }
