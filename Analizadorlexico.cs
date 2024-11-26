@@ -1,29 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-public class Token
-{
-    public TipoToken Tipo { get; set; }
-    public string Valor { get; set; }
 
-    public Token(TipoToken tipo, string valor)
-    {
-        Tipo = tipo;
-        Valor = valor;
-    }
-
-    public override string ToString()
-    {
-        return $"[{Tipo}, '{Valor}']";
-    }
-}
-public class AnalizadorLexico
+public class Lexer
 {
     // Palabras clave del lenguaje
-    private static readonly string[] palabrasClave = { "si", "sino", "mientras", "retorno" };
-    //Operadores logicos
-    private static readonly string[] operadoresl = { "==", "<", ">", "!=" };
-    // Operadores matematicos
+    private static readonly string[] palabrasClave = { "si", "sino", "mientras", "retorno", "Programa" };
+    // Operadores lógicos
+    private static readonly string[] operadoresl = { "==", "<=", ">=","!=","<",">"};
+    // Operadores matemáticos
     private static readonly string[] operadoresm = { "+", "-", "*", "/", "=" };
     
     // Delimitadores del lenguaje
@@ -38,6 +23,8 @@ public class AnalizadorLexico
     {
         List<Token> tokens = new List<Token>();
         int posicion = 0;
+        int linea = 1;
+        int columna = 1;
 
         while (posicion < codigoFuente.Length)
         {
@@ -46,6 +33,15 @@ public class AnalizadorLexico
             // Ignorar espacios en blanco
             if (char.IsWhiteSpace(caracterActual))
             {
+                if (caracterActual == '\n')
+                {
+                    linea++;
+                    columna = 1;
+                }
+                else
+                {
+                    columna++;
+                }
                 posicion++;
                 continue;
             }
@@ -56,8 +52,10 @@ public class AnalizadorLexico
                 int finComentario = codigoFuente.IndexOf('\n', posicion);
                 if (finComentario == -1) finComentario = codigoFuente.Length;
                 string comentario = codigoFuente.Substring(posicion, finComentario - posicion);
-                tokens.Add(new Token(TipoToken.Comentario, comentario));
+                tokens.Add(new Token(TipoToken.Comentario, comentario, linea, columna));
                 posicion = finComentario;
+                columna = 1;
+                linea++;
                 continue;
             }
 
@@ -67,8 +65,11 @@ public class AnalizadorLexico
                 int finComentario = codigoFuente.IndexOf("*/", posicion);
                 if (finComentario == -1) throw new Exception("Comentario sin cerrar");
                 string comentario = codigoFuente.Substring(posicion, finComentario - posicion + 2);
-                tokens.Add(new Token(TipoToken.Comentario, comentario));
+                tokens.Add(new Token(TipoToken.Comentario, comentario, linea, columna));
                 posicion = finComentario + 2;
+                // Actualiza la línea y columna después del comentario
+                linea = codigoFuente.Substring(0, posicion).Count(c => c == '\n') + 1;
+                columna = posicion - codigoFuente.LastIndexOf('\n', posicion - 1);
                 continue;
             }
 
@@ -78,8 +79,9 @@ public class AnalizadorLexico
             {
                 string valor = coincidenciaIdentificador.Value;
                 TipoToken tipo = Array.Exists(palabrasClave, palabra => palabra == valor) ? TipoToken.PalabraClave : TipoToken.Identificador;
-                tokens.Add(new Token(tipo, valor));
+                tokens.Add(new Token(tipo, valor, linea, columna));
                 posicion += valor.Length;
+                columna += valor.Length;
                 continue;
             }
 
@@ -87,28 +89,32 @@ public class AnalizadorLexico
             Match coincidenciaNumero = patronNumero.Match(codigoFuente.Substring(posicion));
             if (coincidenciaNumero.Success)
             {
-                tokens.Add(new Token(TipoToken.Numero, coincidenciaNumero.Value));
+                tokens.Add(new Token(TipoToken.Numero, coincidenciaNumero.Value, linea, columna));
                 posicion += coincidenciaNumero.Value.Length;
+                columna += coincidenciaNumero.Value.Length;
                 continue;
             }
-            // Operadores logicos
+
+            // Operadores lógicos
             foreach (string operadorl in operadoresl)
             {
                 if (codigoFuente.Substring(posicion).StartsWith(operadorl))
                 {
-                    tokens.Add(new Token(TipoToken.OperadorL, operadorl));
+                    tokens.Add(new Token(TipoToken.OperadorL, operadorl, linea, columna));
                     posicion += operadorl.Length;
+                    columna += operadorl.Length;
                     break;
                 }
             }
 
-            // Operadores Matematicos
+            // Operadores matemáticos
             foreach (string operadorm in operadoresm)
             {
                 if (codigoFuente.Substring(posicion).StartsWith(operadorm))
                 {
-                    tokens.Add(new Token(TipoToken.OperadorM, operadorm));
+                    tokens.Add(new Token(TipoToken.OperadorM, operadorm, linea, columna));
                     posicion += operadorm.Length;
+                    columna += operadorm.Length;
                     break;
                 }
             }
@@ -118,8 +124,9 @@ public class AnalizadorLexico
             {
                 if (codigoFuente[posicion].ToString() == delimitador)
                 {
-                    tokens.Add(new Token(TipoToken.Delimitador, delimitador));
+                    tokens.Add(new Token(TipoToken.Delimitador, delimitador, linea, columna));
                     posicion++;
+                    columna++;
                     break;
                 }
             }
@@ -127,8 +134,9 @@ public class AnalizadorLexico
             // Si no se reconoce el carácter, marcarlo como desconocido
             if (tokens.Count == 0 || posicion == 0)
             {
-                tokens.Add(new Token(TipoToken.Desconocido, caracterActual.ToString()));
+                tokens.Add(new Token(TipoToken.Desconocido, caracterActual.ToString(), linea, columna));
                 posicion++;
+                columna++;
             }
         }
 

@@ -1,20 +1,23 @@
 public class Nodo
 {
-    public string Valor { get; set; }          // Valor del nodo
-    public List<Nodo> Hijos { get; set; }      // Lista de nodos hijos
+    public string Valor { get; set; }    // Valor del nodo (como 'x', '1', '+', etc.)
+    public string Tipo { get; set; }     // Tipo del nodo (puede ser "Operador", "Expresión", "Sentencia", etc.)
+    public List<Nodo> Hijos { get; set; } // Lista de nodos hijos
 
-    public Nodo(string valor)
+    public Nodo(string valor, string tipo = "")
     {
-        Valor = valor;                         // Inicializa el valor del nodo
-        Hijos = new List<Nodo>();              // Inicializa la lista de hijos
+        Valor = valor;
+        Tipo = tipo; // El tipo puede ser 'Operador', 'Sentencia', 'Expresión', etc.
+        Hijos = new List<Nodo>();
     }
 
     public void AgregarHijo(Nodo hijo)
     {
-        Hijos.Add(hijo);                       // Agrega un hijo a la lista
+        Hijos.Add(hijo);
     }
 
-    public void Imprimir(string prefijo = "", bool esUltimo = true) // Método para imprimir el árbol
+    // Imprimir el árbol para depuración (opcional)
+    public void Imprimir(string prefijo = "", bool esUltimo = true)
     {
         Console.WriteLine(prefijo + (esUltimo ? "└── " : "├── ") + Valor); // Imprime el valor con prefijo
 

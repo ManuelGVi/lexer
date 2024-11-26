@@ -1,4 +1,6 @@
-mientras (i <= 100) {
+Programa{
+    mientras (i <= 100) {
     i = i + 1;
     x = x * 2;
+}
 }

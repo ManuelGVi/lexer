@@ -14,14 +14,21 @@ public class AnalizadorSintactico
     {
         Nodo raiz = new Nodo("Programa");
 
-        while (posicion < tokens.Count)
+        // Verificar que el primer token sea "Programa"
+        Token primerToken = ObtenerTokenActual();
+        if (primerToken.Tipo != TipoToken.PalabraClave || primerToken.Valor != "Programa")
         {
-            Nodo sentencia = AnalizarSentencia();
-            if (sentencia != null)
-            {
-                raiz.AgregarHijo(sentencia);
-            }
+            throw new Exception("Se esperaba la palabra clave 'Programa' al inicio del código.");
         }
+
+        AvanzarToken(); // Saltar "Programa"
+
+        // Analizar el bloque de código después de "Programa"
+        VerificarToken(TipoToken.Delimitador, "{");
+        AvanzarToken(); // Saltar "{"
+
+        Nodo bloque = AnalizarBloque();
+        raiz.AgregarHijo(bloque);
 
         return raiz;
     }
@@ -63,7 +70,7 @@ public class AnalizadorSintactico
 
         // Se espera "("
         VerificarToken(TipoToken.Delimitador, "(");
-        AvanzarToken(); // Saltar "("s
+        AvanzarToken(); // Saltar "("
 
         // Analizar condición
         Nodo condicion = AnalizarExpresion();
@@ -82,7 +89,7 @@ public class AnalizadorSintactico
 
         if (posicion < tokens.Count && ObtenerTokenActual().Valor == "sino")
         {
-            Nodo nodoElse = new Nodo ("Sentencia else");
+            Nodo nodoElse = new Nodo("Sentencia else");
             nodoElse.AgregarHijo(bloqueIf);
             AvanzarToken(); 
 
@@ -93,7 +100,8 @@ public class AnalizadorSintactico
             nodoElse.AgregarHijo(bloqueElse);
             nodoIf.AgregarHijo(nodoElse);
         }
-        else{
+        else
+        {
             nodoIf.AgregarHijo(bloqueIf);
         }
 
@@ -176,10 +184,9 @@ public class AnalizadorSintactico
         return nodoDeclaracion;
     }
 
-    // Método para analizar expresiones (ej. x + 1)
+    // Método para analizar expresiones (ej. x + 1, i <= 100)
     private Nodo AnalizarExpresion()
     {
-        // Crear el nodo para la expresión
         Nodo nodoExpresion = null;
 
         // Primer operando
@@ -195,8 +202,8 @@ public class AnalizadorSintactico
             throw new Exception("Se esperaba un operando");
         }
 
-        // Operador
-        if (EsOperador(ObtenerTokenActual()))
+        // Operador (se puede hacer más general para incluir operadores lógicos)
+        if (EsOperador(ObtenerTokenActual()) || EsOperadorComparacion(ObtenerTokenActual()))
         {
             Token operador = ObtenerTokenActual();
             nodoExpresion.Valor = $"Operador: {operador.Valor}"; // Cambia el valor del nodo temporal
@@ -218,7 +225,12 @@ public class AnalizadorSintactico
         return nodoExpresion;
     }
 
-    // Análisis de bloques de sentencias "{ ... }"
+    private bool EsOperadorComparacion(Token token)
+    {
+        return token.Tipo == TipoToken.OperadorL && 
+            (token.Valor == "<=" || token.Valor == ">=" || token.Valor == "==" || token.Valor == "!=" || token.Valor == "<" || token.Valor == ">" );
+    }
+
     private Nodo AnalizarBloque()
     {
         Nodo nodoBloque = new Nodo("Bloque");
@@ -239,7 +251,6 @@ public class AnalizadorSintactico
         return nodoBloque;
     }
 
-    // Método para verificar que el token actual sea del tipo esperado
     private void VerificarToken(TipoToken tipoEsperado, string valorEsperado = null)
     {
         Token tokenActual = ObtenerTokenActual();
@@ -249,20 +260,21 @@ public class AnalizadorSintactico
         }
     }
 
-    // Método para avanzar al siguiente token
     private void AvanzarToken()
     {
         posicion++;
     }
 
-    // Obtener el token actual
     private Token ObtenerTokenActual()
     {
+        while (posicion < tokens.Count && tokens[posicion].Tipo == TipoToken.Comentario)
+        {
+            posicion++; // Ignorar comentarios
+        }
         if (posicion >= tokens.Count) throw new Exception("No hay más tokens disponibles");
         return tokens[posicion];
     }
 
-    // Verificar si el token actual es un operador matemático o lógico
     private bool EsOperador(Token token)
     {
         return token.Tipo == TipoToken.OperadorM || token.Tipo == TipoToken.OperadorL;
