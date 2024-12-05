@@ -1,10 +1,12 @@
 Programa{
     si (x <= 10) {
     retorno x + 1;
-    // Comentario en una sola línea
-    /* Comentario 
-       de varias líneas */
 } sino {
     retorno y - 2;
 }
+}
+Programa{
+    si (x <= 10) {
+    retorno x + 1;
+    }
 }

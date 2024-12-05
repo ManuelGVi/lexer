@@ -166,7 +166,7 @@ public class AnalizadorSintactico
         // Se espera un identificador
         Token tokenIdentificador = ObtenerTokenActual();
         VerificarToken(TipoToken.Identificador);
-        nodoDeclaracion.AgregarHijo(new Nodo($"Identificador: {tokenIdentificador.Valor}"));
+        nodoDeclaracion.AgregarHijo(new Nodo($"Operando: {tokenIdentificador.Valor}"));
         AvanzarToken(); // Saltar el identificador
 
         // Se espera "="

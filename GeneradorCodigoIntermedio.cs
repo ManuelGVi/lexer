@@ -47,13 +47,10 @@ public class GeneradorCodigoIntermedio
         }
         else if (nodo.Valor == "Sentencia Return")
         {
-            string operador = nodo.Hijos[0].Valor; // Este es el operador como '+' o '-'
-            string operando1 = ProcesarNodo(nodo.Hijos[1]);
-            string operando2 = ProcesarNodo(nodo.Hijos[2]);
-
-            string resultado = $"t{contadorTemporal++}";
-            cuadruplos.Add(new Cuadruplo(operador, operando1, operando2, resultado));
-            cuadruplos.Add(new Cuadruplo("RETURN", resultado, null, null));
+            string resultado = ProcesarReturn(nodo);
+            if (!string.IsNullOrEmpty(resultado)){
+                cuadruplos.Add(new Cuadruplo("Return", resultado, null,null));
+            }
         }
        
         else if (nodo.Valor == "Bloque")
@@ -63,15 +60,9 @@ public class GeneradorCodigoIntermedio
                 ProcesarNodo(hijo);
             }
         }
-        else if (nodo.Valor.StartsWith("Operador: "))
+        else if (nodo.Valor == "Operador: ")
         {
-            // Manejo de operadores como antes
-            string operador = nodo.Valor.Substring(10);
-            string operando1 = ProcesarNodo(nodo.Hijos[0]);
-            string operando2 = ProcesarNodo(nodo.Hijos[1]);
-
-            string resultado = $"t{contadorTemporal++}";
-            cuadruplos.Add(new Cuadruplo(operador, operando1, operando2, resultado));
+            string resultado = ProcesarOperacion(nodo);
             return resultado;
         }
         else if (nodo.Valor.StartsWith("Identificador: ") || nodo.Valor.StartsWith("Operando: "))
@@ -82,40 +73,37 @@ public class GeneradorCodigoIntermedio
         return null;
     }
 
-    private void ProcesarIf(Nodo nodo)
+private void ProcesarIf(Nodo nodo)
 {
     Console.WriteLine("Procesando Sentencia If...");
 
-    // Procesar la condición (operador y operandos)
+    // Procesar la condición (primer hijo)
     string condicion = ProcesarNodo(nodo.Hijos[0]);
-
+    string bloquin= ProcesarNodo(nodo.Hijos[1]);
     // Crear etiquetas para los saltos
-    string etiquetaElse = $"L{contadorEtiqueta++}";
     string etiquetaFin = $"L{contadorEtiqueta++}";
+    if (nodo.Hijos[1].Valor == "Sentencia else"){
+         // Cuádruplo: IF_FALSE condición, salta a etiquetaFin si es falso
+    cuadruplos.Add(new Cuadruplo("IF_FALSE", condicion, null, etiquetaFin));
 
-    // Cuádruplo: IF_FALSE condición, salta a etiquetaElse
-    cuadruplos.Add(new Cuadruplo("IF_FALSE", condicion, null, etiquetaElse));
+    // Procesar el bloque verdadero (Sentencia Return u otra)
+    ProcesarNodo(nodo.Hijos[1].Hijos[0]);  // El bloque del If (cuando la condición es verdadera)
 
-    // Procesar el bloque del if (verdadero)
-    ProcesarNodo(nodo.Hijos[1]);
-
-    // Cuádruplo: GOTO etiquetaFin
-    cuadruplos.Add(new Cuadruplo("GOTO", null, null, etiquetaFin));
-
-    // EtiquetaElse
-    cuadruplos.Add(new Cuadruplo("LABEL", null, null, etiquetaElse));
-
-    // Si el segundo hijo es un nodo "Sentencia else", procesamos el bloque 'else'
-    // Ya que en tu árbol binario solo hay dos hijos, el segundo hijo es o el bloque "if" o el bloque "else"
-    if (nodo.Hijos[1].Valor == "Sentencia else")
-    {
-        ProcesarElse(nodo); // Procesar el bloque 'else'
+    // EtiquetaFin
+    cuadruplos.Add(new Cuadruplo("LABEL", null, null, etiquetaFin));
+    ProcesarNodo(nodo.Hijos[1].Hijos[1]);
     }
+else{
+    // Cuádruplo: IF_FALSE condición, salta a etiquetaFin si es falso
+    cuadruplos.Add(new Cuadruplo("IF_FALSE", condicion, null, etiquetaFin));
+
+    // Procesar el bloque verdadero (Sentencia Return u otra)
+    ProcesarNodo(nodo.Hijos[1]);  // El bloque del If (cuando la condición es verdadera)
 
     // EtiquetaFin
     cuadruplos.Add(new Cuadruplo("LABEL", null, null, etiquetaFin));
 }
-
+}
 
     private void ProcesarWhile(Nodo nodo)
     {
@@ -143,16 +131,6 @@ public class GeneradorCodigoIntermedio
         // EtiquetaFin
         cuadruplos.Add(new Cuadruplo("LABEL", null, null, etiquetaFin));
     }
-
-    private string ProcesarAsignacion(Nodo nodo)
-    {
-        string identificador = ProcesarNodo(nodo.Hijos[0]);
-        string expresion = ProcesarNodo(nodo.Hijos[1]);
-
-        cuadruplos.Add(new Cuadruplo("=", expresion, null, identificador));
-        return identificador;
-    }
-
     private string ProcesarOperacion(Nodo nodo)
     {
         string operador = nodo.Valor.Substring(10);
@@ -165,22 +143,35 @@ public class GeneradorCodigoIntermedio
 
         return resultado;
     }
+    private string ProcesarReturn(Nodo nodo)
+{
+    string operando = ProcesarNodo(nodo.Hijos[0]);
 
-    private void ProcesarElse(Nodo nodo)
+    // Si el hijo es un operador, procesa la operación
+    if (nodo.Hijos[0].Valor.StartsWith("Operador: "))
     {
-        Console.WriteLine("Procesando Sentencia Else...");
+        string operador = nodo.Hijos[0].Valor.Substring(10);
+        string operando1 = ProcesarNodo(nodo.Hijos[0].Hijos[0]);
+        string operando2 = ProcesarNodo(nodo.Hijos[0].Hijos[1]);
 
-        // Verificar si el bloque 'else' tiene hijos (instrucciones dentro del else)
-        if (nodo.Hijos.Count > 0)
-        {
-            foreach (var hijo in nodo.Hijos)
-            {
-                ProcesarNodo(hijo); // Procesar el bloque dentro del 'else'
-            }
-        }
-        else
-        {
-            Console.WriteLine("El bloque 'else' no tiene instrucciones.");
-        }
+        string resultado = $"t{contadorTemporal++}";
+        cuadruplos.Add(new Cuadruplo(operador, operando1, operando2, resultado));
+        return resultado;
     }
+    else
+    {
+        // Si no es un operador, es un operando directo
+        return operando;
+    }
+}
+private string ProcesarAsignacion(Nodo nodo)
+{
+    string variable = nodo.Hijos[0].Valor.Split(": ")[1];  // Nombre de la variable (e.g., y)
+    string valor = ProcesarNodo(nodo.Hijos[1]);            // Procesar la operación o valor asignado (e.g., y + 1)
+
+    cuadruplos.Add(new Cuadruplo("=", valor, null, variable));  // Cuádruplo de asignación
+    return variable;  // Retorna la variable asignada
+}
+
+
 }

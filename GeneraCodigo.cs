@@ -12,7 +12,7 @@ public class GenerarCodigo
 
     public void Generar()
     {
-        Console.WriteLine("\nCódigo Intermedio (Pseudocódigo):");
+        Console.WriteLine("\nCódigo Intermedio:");
         foreach (var cuadruplo in cuadruplos)
         {
             string codigo = FormatearCuadruplo(cuadruplo);
@@ -33,6 +33,8 @@ public class GenerarCodigo
                 return $"IF NOT {cuadruplo.Operando1} GOTO {cuadruplo.Resultado}";
             case "=":
                 return $"{cuadruplo.Resultado} = {cuadruplo.Operando1}";
+            case "Return":
+                return $"RETURN {cuadruplo.Operando1}";
             default:
                 // Operadores binarios como +, -, *, /
                 if (!string.IsNullOrEmpty(cuadruplo.Operando2))
