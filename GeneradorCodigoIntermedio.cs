@@ -60,11 +60,15 @@ public class GeneradorCodigoIntermedio
                 ProcesarNodo(hijo);
             }
         }
-        else if (nodo.Valor == "Operador: ")
-        {
-            string resultado = ProcesarOperacion(nodo);
-            return resultado;
-        }
+            else if (nodo.Valor == "Operador: =")
+    {
+        return ProcesarAsignacion(nodo);
+    }
+    else if (nodo.Valor.StartsWith("Operador: "))
+    {
+        return ProcesarOperacion(nodo);
+    }
+
         else if (nodo.Valor.StartsWith("Identificador: ") || nodo.Valor.StartsWith("Operando: "))
         {
             return nodo.Valor.Split(": ")[1];
@@ -167,7 +171,7 @@ else{
 private string ProcesarAsignacion(Nodo nodo)
 {
     string variable = nodo.Hijos[0].Valor.Split(": ")[1];  // Nombre de la variable (e.g., y)
-    string valor = ProcesarNodo(nodo.Hijos[1]);            // Procesar la operación o valor asignado (e.g., y + 1)
+    string valor = ProcesarOperacion(nodo.Hijos[1]);            // Procesar la operación o valor asignado (e.g., y + 1)
 
     cuadruplos.Add(new Cuadruplo("=", valor, null, variable));  // Cuádruplo de asignación
     return variable;  // Retorna la variable asignada

@@ -46,6 +46,8 @@ public class AnalizadorSintactico
                     return AnalizarIf();
                 case "mientras":
                     return AnalizarWhile();
+                case "para":
+                return AnalizarFor();
                 case "retorno":
                     return AnalizarReturn();
                 default:
@@ -279,4 +281,49 @@ public class AnalizadorSintactico
     {
         return token.Tipo == TipoToken.OperadorM || token.Tipo == TipoToken.OperadorL;
     }
+    private Nodo AnalizarFor()
+{
+    Nodo nodoFor = new Nodo("Sentencia For");
+
+    // Se espera "para"
+    AvanzarToken(); // Saltar "para"
+
+    // Se espera "("
+    VerificarToken(TipoToken.Delimitador, "(");
+    AvanzarToken(); // Saltar "("
+
+    // Analizar inicialización (declaración o asignación)
+    Nodo inicializacion = AnalizarSentencia();
+    nodoFor.AgregarHijo(inicializacion);
+
+    // Se espera ";"
+    VerificarToken(TipoToken.Delimitador, ";");
+    AvanzarToken(); // Saltar ";"
+
+    // Analizar condición
+    Nodo condicion = AnalizarExpresion();
+    nodoFor.AgregarHijo(condicion);
+
+    // Se espera ";"
+    VerificarToken(TipoToken.Delimitador, ";");
+    AvanzarToken(); // Saltar ";"
+
+    // Analizar actualización (expresión)
+    Nodo actualizacion = AnalizarExpresion();
+    nodoFor.AgregarHijo(actualizacion);
+
+    // Se espera ")"
+    VerificarToken(TipoToken.Delimitador, ")");
+    AvanzarToken(); // Saltar ")"
+
+    // Se espera "{"
+    VerificarToken(TipoToken.Delimitador, "{");
+    AvanzarToken(); // Saltar "{"
+
+    // Analizar sentencias dentro del bloque
+    Nodo bloque = AnalizarBloque();
+    nodoFor.AgregarHijo(bloque);
+
+    return nodoFor;
+}
 }

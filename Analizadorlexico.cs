@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 public class Lexer
 {
     // Palabras clave del lenguaje
-    private static readonly string[] palabrasClave = { "si", "sino", "mientras", "retorno", "Programa" };
+    private static readonly string[] palabrasClave = { "si", "sino", "mientras", "retorno", "Programa","para" };
     // Operadores lógicos
     private static readonly string[] operadoresl = { "==", "<=", ">=","!=","<",">"};
     // Operadores matemáticos
