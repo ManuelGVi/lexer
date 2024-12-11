@@ -1,12 +1,18 @@
 Programa{
     si (x <= 10) {
-    retorno x + 1;
+    retorno x;
 } sino {
     retorno y - 2;
 }
 }
 Programa{
     si (x <= 10) {
+        y=1;
     retorno x + 1;
     }
+}
+Programa{
+ para (i = 0; i < 10; i = i + 1) {
+    retorno x + 1;
+} 
 }

@@ -186,46 +186,56 @@ public class AnalizadorSintactico
         return nodoDeclaracion;
     }
 
-    // Método para analizar expresiones (ej. x + 1, i <= 100)
-    private Nodo AnalizarExpresion()
-    {
-        Nodo nodoExpresion = null;
+    // Método para analizar expresiones 
+   private Nodo AnalizarExpresion()
+{
+    // Crear nodo directamente con el operador, si existe.
+    Nodo nodoExpresion;
 
-        // Primer operando
-        Token operando = ObtenerTokenActual();
-        if (operando.Tipo == TipoToken.Identificador || operando.Tipo == TipoToken.Numero)
+    // Primer operando
+    Token operando1 = ObtenerTokenActual();
+    if (operando1.Tipo == TipoToken.Identificador || operando1.Tipo == TipoToken.Numero)
+    {
+        AvanzarToken();
+    }
+    else
+    {
+        throw new Exception("Se esperaba un operando");
+    }
+
+    // Verificar si hay un operador (puede ser una operación aritmética o de comparación)
+    if (EsOperador(ObtenerTokenActual()) || EsOperadorComparacion(ObtenerTokenActual()))
+    {
+        // Crear nodo con el operador como raíz
+        Token operador = ObtenerTokenActual();
+        nodoExpresion = new Nodo($"Operador: {operador.Valor}");
+        AvanzarToken(); // Saltar el operador
+
+        // Agregar primer operando como hijo
+        nodoExpresion.AgregarHijo(new Nodo($"Operando: {operando1.Valor}"));
+
+        // Segundo operando
+        Token operando2 = ObtenerTokenActual();
+        if (operando2.Tipo == TipoToken.Identificador || operando2.Tipo == TipoToken.Numero)
         {
-            nodoExpresion = new Nodo("Operador: (temp)"); // Nodo temporal para el operador
-            nodoExpresion.AgregarHijo(new Nodo($"Operando: {operando.Valor}"));
+            nodoExpresion.AgregarHijo(new Nodo($"Operando: {operando2.Valor}"));
             AvanzarToken();
         }
         else
         {
-            throw new Exception("Se esperaba un operando");
+            throw new Exception("Se esperaba un segundo operando");
         }
-
-        // Operador (se puede hacer más general para incluir operadores lógicos)
-        if (EsOperador(ObtenerTokenActual()) || EsOperadorComparacion(ObtenerTokenActual()))
-        {
-            Token operador = ObtenerTokenActual();
-            nodoExpresion.Valor = $"Operador: {operador.Valor}"; // Cambia el valor del nodo temporal
-            AvanzarToken(); // Saltar el operador
-
-            // Segundo operando
-            operando = ObtenerTokenActual();
-            if (operando.Tipo == TipoToken.Identificador || operando.Tipo == TipoToken.Numero)
-            {
-                nodoExpresion.AgregarHijo(new Nodo($"Operando: {operando.Valor}"));
-                AvanzarToken();
-            }
-            else
-            {
-                throw new Exception("Se esperaba un segundo operando");
-            }
-        }
-
-        return nodoExpresion;
     }
+    else
+    {
+        // Si no hay operador, simplemente devolver el primer operando como nodo
+        nodoExpresion = new Nodo($"Operando: {operando1.Valor}");
+    }
+
+    return nodoExpresion;
+}
+
+
 
     private bool EsOperadorComparacion(Token token)
     {
@@ -281,7 +291,7 @@ public class AnalizadorSintactico
     {
         return token.Tipo == TipoToken.OperadorM || token.Tipo == TipoToken.OperadorL;
     }
-    private Nodo AnalizarFor()
+  private Nodo AnalizarFor()
 {
     Nodo nodoFor = new Nodo("Sentencia For");
 
@@ -292,38 +302,117 @@ public class AnalizadorSintactico
     VerificarToken(TipoToken.Delimitador, "(");
     AvanzarToken(); // Saltar "("
 
-    // Analizar inicialización (declaración o asignación)
-    Nodo inicializacion = AnalizarSentencia();
-    nodoFor.AgregarHijo(inicializacion);
-
+    // Analizar inicialización
+    Nodo inicializacion = AnalizarInicializacionFor();
+    
     // Se espera ";"
     VerificarToken(TipoToken.Delimitador, ";");
     AvanzarToken(); // Saltar ";"
 
     // Analizar condición
-    Nodo condicion = AnalizarExpresion();
-    nodoFor.AgregarHijo(condicion);
+    Nodo condicion = AnalizarCondicionFor();
 
     // Se espera ";"
     VerificarToken(TipoToken.Delimitador, ";");
     AvanzarToken(); // Saltar ";"
 
-    // Analizar actualización (expresión)
-    Nodo actualizacion = AnalizarExpresion();
-    nodoFor.AgregarHijo(actualizacion);
+    // Analizar actualización
+    Nodo actualizacion = AnalizarActualizacionFor();
 
     // Se espera ")"
     VerificarToken(TipoToken.Delimitador, ")");
     AvanzarToken(); // Saltar ")"
 
+    // Crear nodos binarios para condición y actualización
+    Nodo condicionYactualizacion = new Nodo("CondicionYActualizacion");
+    condicionYactualizacion.AgregarHijo(condicion);
+    condicionYactualizacion.AgregarHijo(actualizacion);
+
     // Se espera "{"
     VerificarToken(TipoToken.Delimitador, "{");
     AvanzarToken(); // Saltar "{"
 
-    // Analizar sentencias dentro del bloque
+    // Analizar el bloque de sentencias
     Nodo bloque = AnalizarBloque();
+
+    // Crear nodos binarios para inicialización y el resto del bucle
+    Nodo inicializacionYresto = new Nodo("InicializacionYresto");
+    inicializacionYresto.AgregarHijo(inicializacion);
+    inicializacionYresto.AgregarHijo(condicionYactualizacion);
+    
+    nodoFor.AgregarHijo(inicializacionYresto);
     nodoFor.AgregarHijo(bloque);
 
     return nodoFor;
 }
+private Nodo AnalizarInicializacionFor()
+{
+    Nodo nodoInicializacion = new Nodo("Inicializacion");
+
+    Token tokenActual = ObtenerTokenActual();
+    if (tokenActual.Tipo == TipoToken.Identificador)
+    {
+        Nodo identificador = new Nodo($"Identificador: {tokenActual.Valor}");
+        AvanzarToken(); // Saltar el identificador
+
+        VerificarToken(TipoToken.OperadorM, "=");
+        Nodo operador = new Nodo("Operador: =");
+        AvanzarToken(); // Saltar "="
+
+        Nodo expresionInicializacion = AnalizarExpresion();
+
+        operador.AgregarHijo(identificador);
+        operador.AgregarHijo(expresionInicializacion);
+
+        nodoInicializacion.AgregarHijo(operador);
+    }
+    else
+    {
+        throw new Exception("Se esperaba una declaración o asignación en la inicialización del bucle for");
+    }
+
+    return nodoInicializacion;
+}
+
+private Nodo AnalizarCondicionFor()
+{
+    Nodo nodoCondicion = new Nodo("Condicion");
+
+    Nodo condicion = AnalizarExpresion();
+    nodoCondicion.AgregarHijo(condicion);
+
+    return nodoCondicion;
+}
+
+private Nodo AnalizarActualizacionFor()
+{
+    Nodo nodoActualizacion = new Nodo("Actualizacion");
+
+    Token tokenActual = ObtenerTokenActual();
+    if (tokenActual.Tipo == TipoToken.Identificador)
+    {
+        Nodo identificador = new Nodo($"Identificador: {tokenActual.Valor}");
+        AvanzarToken(); // Saltar el identificador
+
+        VerificarToken(TipoToken.OperadorM, "=");
+        Nodo operador = new Nodo("Operador: =");
+        AvanzarToken(); // Saltar "="
+
+        Nodo expresionActualizacion = AnalizarExpresion();
+
+        operador.AgregarHijo(identificador);
+        operador.AgregarHijo(expresionActualizacion);
+
+        nodoActualizacion.AgregarHijo(operador);
+    }
+    else
+    {
+        throw new Exception("Se esperaba una asignación en la actualización del bucle for");
+    }
+
+    return nodoActualizacion;
+}
+
+
+
 }

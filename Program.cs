@@ -43,13 +43,19 @@ namespace AnalizadorLexico
             arbolSintactico.Imprimir();
             GeneradorCodigoIntermedio generador = new GeneradorCodigoIntermedio();
             List<Cuadruplo> cuadruplos = generador.GenerarCodigoIntermedio(arbolSintactico);
+      Console.WriteLine("{0,-10} | {1,-15} | {2,-15} | |{3,-15}", "Operador", "Operando1", "Operando2","Resultado");
+            Console.WriteLine(new string('-', 45));
 
+            for (int i = 0; i < cuadruplos.Count; i++)
+            {
+                Console.WriteLine("{0,-10} | {1,-15} | {2,-15} | {3,-15}", cuadruplos[i].Operador, cuadruplos[i].Operando1, cuadruplos[i].Operando2, cuadruplos[i].Resultado);
+            }
             // Mostrar los cuádruplos generados
-            Console.WriteLine("\nCódigo Intermedio (Cuádruplos):");
+          /*  Console.WriteLine("\nCódigo Intermedio (Cuádruplos):");
             foreach (var cuadruplo in cuadruplos)
             {
                 Console.WriteLine(cuadruplo);
-            }
+            }*/
             GenerarCodigo generadorCodigo = new GenerarCodigo(cuadruplos);
             generadorCodigo.Generar();
         }

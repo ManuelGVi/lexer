@@ -1,6 +1,17 @@
 Programa{
     mientras (i <= 100) {
     i = i + 1;
+    y=1;
     x = x * 2;
+     mientras (i <= 100) {
+    i = i + 1;
+    x = x * 2;
+}
+}
+}
+Programa{
+    mientras (i <= 100) {
+    i = i + 1;
+    retorno i;
 }
 }
